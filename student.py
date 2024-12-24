@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox,Tk
 import pymysql as sqltor
+import cv2 
 
 
 
@@ -199,10 +200,10 @@ class Student:
 
         # Radio Buttons
         self.var_radio1=StringVar()
-        radionbtn1=ttk.Radiobutton(class_Student_frame,variable=self.var_radio1,text="take photo sample",value="yes")
+        radionbtn1=ttk.Radiobutton(class_Student_frame,variable=self.var_radio1,text="Take photo sample",value="yes")
         radionbtn1.grid(row=6,column=0)
         
-        radionbtn2=ttk.Radiobutton(class_Student_frame,variable=self.var_radio1,text="no photo sample",value="no")
+        radionbtn2=ttk.Radiobutton(class_Student_frame,variable=self.var_radio1,text="No photo sample",value="no")
         radionbtn2.grid(row=6,column=1)
 
         # bbuttons frame
@@ -225,7 +226,7 @@ class Student:
         btn_frame1=Frame(class_Student_frame,bd=2,relief=RIDGE,bg="white")
         btn_frame1.place(x=0,y=235,width=715,height=35)
 
-        take_photo_btn=Button(btn_frame1,text="Take photo Sample",width=35,font=("timesnew roman",13,"bold"),bg="blue",fg="white")
+        take_photo_btn=Button(btn_frame1,command=self.generate_dataset,text="Take photo Sample",width=35,font=("timesnew roman",13,"bold"),bg="blue",fg="white")
         take_photo_btn.grid(row=0,column=0)
 
         update_photo_btn=Button(btn_frame1,text="Update photo Sample",width=35,font=("timesnew roman",13,"bold"),bg="blue",fg="white")
@@ -357,7 +358,7 @@ class Student:
            messagebox.showerror("Error", f"Due to: {str(es)}", parent=self.root)     
 
 
-# =============fetch data============= 
+    # =============fetch data============= 
     def fetch_data(self):
         conn=sqltor.connect(host="localhost", user="root", password='MySQL@12#', database="face_recognizer_1")
         my_cursor=conn.cursor()
@@ -371,7 +372,7 @@ class Student:
             conn.commit()
         conn.close()                                                                    
                                                                                                         
-# ============get cursor=============
+    # ============get cursor=============
     def get_cursor(self,event=""):
         cursor_focus=self.student_table.focus()
         content=self.student_table.item(cursor_focus)
@@ -403,7 +404,7 @@ class Student:
                 if Update>0:
                     conn=sqltor.connect(host="localhost", user="root", password='MySQL@12#', database="face_recognizer_1")
                     my_cursor=conn.cursor()
-                    my_cursor.execute("update student set Dep=%s,course=%s,Year=%s,Semester=%s,Div=%s,Roll=%s,Gender=%s,Dob=%s,Email=%s,Phone=%s,Address=%s,Teacher=%s,PhotoSample=%s where Student_id=%s",(
+                    my_cursor.execute("update student set Department=%s,Course=%s,Year=%s,Semester=%s,Division=%s,Name=%s,Roll_No=%s,Gender=%s,DOB=%s,Email=%s,Phone=%s,Address=%s,Teacher=%s,PhotoSampleStatus=%s where Studentid=%s",(
                                                                                                                                                                                                       
                                                                                                                                                                                 self.var_dep.get(),
                                                                                                                                                                                 self.var_course.get(),
@@ -441,7 +442,7 @@ class Student:
                 if delete>0:
                     conn=sqltor.connect(host="localhost", user="root", password='MySQL@12#', database="face_recognizer_1")
                     my_cursor=conn.cursor()
-                    sql="delete from student where student_id=%s"
+                    sql="delete from student where Studentid=%s"
                     val=(self.var_std_id.get(),)
                     my_cursor.execute(sql,val)
                 else:
@@ -450,14 +451,14 @@ class Student:
                 conn.commit()
                 self.fetch_data()
                 conn.close()        
-                messagebox.showinto("delete","Successfully deleted student details",parent=self.root)
+                messagebox.showinfo("delete","Successfully deleted student details",parent=self.root)
             except Exception as es:
                 messagebox.showerror("Error",f"Due To:{str(es)}",parent=self.root)    
 
 
 
 
-    # reset
+    # reset function
     def reset_data(self):
         self.var_dep.set("Select Department")
         self.var_course.set("Select Course")
@@ -475,14 +476,80 @@ class Student:
         self.var_teacher.set("")
         self.var_radio1.set("")
     
-        
+    # ============== Generate data set   or   Take Photo  Samples ==========
+    def generate_dataset(self):
+        if self.var_dep.get()=="Select Department" or self.var_std_name.get()=="" or self.var_std_id.get() == "":
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+        else:
+            try:
+                conn=sqltor.connect(host="localhost", user="root", password='MySQL@12#', database="face_recognizer_1")
+                my_cursor=conn.cursor()
+                my_cursor.execute("select* from student")
+                myresult=my_cursor.fetchall()
+                id=0
+                for x in myresult:
+                    id+=1
+                my_cursor.execute("update student set Department=%s,Course=%s,Year=%s,Semester=%s,Division=%s,Name=%s,Roll_No=%s,Gender=%s,DOB=%s,Email=%s,Phone=%s,Address=%s,Teacher=%s,PhotoSampleStatus=%s where Studentid=%s",(
+                                                                                                                                                                                                      
+                                                                                                                                                                                self.var_dep.get(),
+                                                                                                                                                                                self.var_course.get(),
+                                                                                                                                                                                self.var_year.get(),
+                                                                                                                                                                                self.var_semester.get(),                                                                       
+                                                                                                                                                                                self.var_std_name.get(),
+                                                                                                                                                                                self.var_div.get(),
+                                                                                                                                                                                self.var_roll.get(),
+                                                                                                                                                                                self.var_gender.get(),
+                                                                                                                                                                                self.var_dob.get(),
+                                                                                                                                                                                self.var_email.get(),
+                                                                                                                                                                                self.var_phone.get(),
+                                                                                                                                                                                self.var_address.get(),
+                                                                                                                                                                                self.var_teacher.get(),
+                                                                                                                                                                                self.var_radio1.get(),
+                                                                                                                                                                                self.var_std_id.get()==id+1
+                
+                                                                                                                                                                            ))   
+                conn.commit()
+                self.fetch_data()
+                self.reset_data()
+                conn.close()
+            
 
+                # ==== Load predefined data on face frontals from opencv =======
 
+                face_classifier=cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+                # cropped img
+                def face_cropped(img):
+                    gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+                    faces=face_classifier.detectMultiScale(gray,1.3,5)
+                    #scaling factor=1.3
+                    #Minimum Neighbour=5
 
+                    for (x,y,w,h) in faces:
+                        face_cropped=img[y:y+h,x:x+w]
+                        return face_cropped
+               
+                cap=cv2.VideoCapture(0)
+                img_id=0
+                while True:
+                    ret,my_frame=cap.read()
+                    if face_cropped(my_frame) is not None:
+                        img_id+=1
+                        face=cv2.resize(face_cropped(my_frame),(450,450))
+                        face=cv2.cvtColor(face,cv2.COLOR_BGR2GRAY)
+                        file_name_path="Data/user."+str(id)+"."+str(img_id)+".jpg"
+                        cv2.imwrite(file_name_path,face)
+                        cv2.putText(face,str(img_id),(50,50),cv2.FONT_HERSHEY_COMPLEX,2,(0,255,0),2)
+                        cv2.imshow("Cropped Face",face)
 
-
-
-
+                    if cv2.waitKey(1)==13 or int(img_id)==25:
+                        break
+                cap.release()
+                cv2.destroyAllWindows()
+                messagebox.showinfo("Result","Generating data sets completed!!")
+            except Exception as es:
+                messagebox.showerror("Error",f"Due To:{str(es)}",parent=self.root) 
+            
+                
 
 if __name__ == "__main__": 
     root=Tk()
